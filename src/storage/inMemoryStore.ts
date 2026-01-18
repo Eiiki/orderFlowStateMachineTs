@@ -28,7 +28,7 @@ export class InMemoryStore {
    * Overwrites if a node with the same id already exists.
    */
   addNode(node: Node): void {
-    // TODO: implement
+    this.nodes.set(node.id, node);
   }
 
   /**
@@ -36,8 +36,7 @@ export class InMemoryStore {
    * @returns The node, or undefined if not found
    */
   getNode(id: NodeId): Node | undefined {
-    // TODO: implement
-    return undefined;
+    return this.nodes.get(id);
   }
 
   /**
@@ -53,8 +52,19 @@ export class InMemoryStore {
    * @throws NodeNotFoundError if node doesn't exist
    */
   setNodeState(id: NodeId, newState: State): StateChanged | null {
-    // TODO: implement
-    throw new NodeNotFoundError(id);
+    const node = this.nodes.get(id);
+    if (!node) {
+      throw new NodeNotFoundError(id);
+    }
+
+    if (node.state === newState) {
+      return null;
+    }
+
+    const fromState = node.state;
+    node.state = newState;
+
+    return { nodeId: id, fromState, toState: newState };
   }
 
   /**
@@ -66,15 +76,14 @@ export class InMemoryStore {
    * @returns Links with trigger.sourceId matching the given id
    */
   getLinksForSource(sourceId: NodeId): Link[] {
-    // TODO: implement
-    return [];
+    return this.links.filter((link) => link.trigger.sourceId === sourceId);
   }
 
   /**
    * Add a link to the store.
    */
   addLink(link: Link): void {
-    // TODO: implement
+    this.links.push(link);
   }
 
   /**
@@ -82,7 +91,6 @@ export class InMemoryStore {
    * Useful for getting a snapshot of all states.
    */
   listNodes(): Node[] {
-    // TODO: implement
-    return [];
+    return [...this.nodes.values()];
   }
 }

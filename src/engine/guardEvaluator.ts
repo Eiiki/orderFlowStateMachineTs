@@ -17,6 +17,15 @@ import type { InMemoryStore } from "../storage/inMemoryStore";
  * @returns true if the guard conditions are satisfied
  */
 export function evaluateGuard(guard: Guard, store: InMemoryStore): boolean {
-  // TODO: implement
-  return false;
+  function checkCondition(condition: GuardCondition): boolean {
+    const node = store.getNode(condition.nodeId);
+    return node?.state === condition.state;
+  }
+
+  switch (guard.type) {
+    case "ALL_OF":
+      return guard.conditions.every(checkCondition);
+    case "ANY_OF":
+      return guard.conditions.some(checkCondition);
+  }
 }

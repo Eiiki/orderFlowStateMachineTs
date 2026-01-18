@@ -18,14 +18,21 @@ export interface TraceEntry {
  * Format a single trace entry as a readable string.
  */
 export function formatTraceEntry(entry: TraceEntry): string {
-  // TODO: implement
-  return "";
+  const { event, triggeredBy } = entry;
+  const base = `${event.nodeId}: ${event.fromState} → ${event.toState}`;
+
+  if (triggeredBy) {
+    return `${base} (via ${triggeredBy})`;
+  }
+  return base;
 }
 
 /**
  * Format a complete trace as a readable multi-line string.
  */
 export function formatTrace(trace: TraceEntry[]): string {
-  // TODO: implement
-  return "";
+  if (trace.length === 0) {
+    return "(no changes)";
+  }
+  return trace.map(formatTraceEntry).join("\n");
 }

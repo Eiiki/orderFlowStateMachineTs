@@ -54,15 +54,73 @@ export class WorkflowEngine {
    * @returns Array of trace entries showing all state changes that occurred
    */
   updateState(nodeId: NodeId, newState: State): TraceEntry[] {
-    // TODO: implement
-    return [];
+    const trace: TraceEntry[] = [];
+    const queue: Array<{ event: StateChanged; triggeredBy?: string }> = [];
+
+    // Apply initial state change
+    const initialEvent = this.store.setNodeState(nodeId, newState);
+    if (!initialEvent) {
+      return []; // No change
+    }
+
+    // Add to trace and queue
+    trace.push({ event: initialEvent });
+    queue.push({ event: initialEvent });
+
+    // Process queue until empty
+    while (queue.length > 0) {
+      // Safety check
+      if (trace.length > this.maxEvents) {
+        throw new MaxEventsExceededError(this.maxEvents);
+      }
+
+      const { event } = queue.shift()!;
+
+      // Find links that could be triggered by this event
+      const links = this.store.getLinksForSource(event.nodeId);
+
+      for (const link of links) {
+        // Check if link's trigger matches this event
+        if (!matchLink(link, event)) {
+          continue;
+        }
+
+        // Check guard if present
+        if (link.guard && !evaluateGuard(link.guard, this.store)) {
+          continue;
+        }
+
+        // Apply all actions
+        for (const action of link.actions) {
+          const actionEvent = this.store.setNodeState(
+            action.targetId,
+            action.targetState
+          );
+
+          // Only add to trace/queue if state actually changed
+          if (actionEvent) {
+            const entry: TraceEntry = {
+              event: actionEvent,
+              triggeredBy: link.id,
+            };
+            trace.push(entry);
+            queue.push({ event: actionEvent, triggeredBy: link.id });
+          }
+        }
+      }
+    }
+
+    return trace;
   }
 
   /**
    * Get a snapshot of all current node states.
    */
   getAllStates(): Record<NodeId, State> {
-    // TODO: implement
-    return {};
+    const states: Record<NodeId, State> = {};
+    for (const node of this.store.listNodes()) {
+      states[node.id] = node.state;
+    }
+    return states;
   }
 }

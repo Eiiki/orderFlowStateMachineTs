@@ -18,6 +18,22 @@ import type { StateChanged } from "../domain/event";
  * @returns true if the link's trigger matches the event
  */
 export function matchLink(link: Link, event: StateChanged): boolean {
-  // TODO: implement
-  return false;
+  const { trigger } = link;
+
+  // Source must match
+  if (trigger.sourceId !== event.nodeId) {
+    return false;
+  }
+
+  // Target state must match
+  if (trigger.toState !== event.toState) {
+    return false;
+  }
+
+  // If fromState specified, it must match
+  if (trigger.fromState !== undefined && trigger.fromState !== event.fromState) {
+    return false;
+  }
+
+  return true;
 }
